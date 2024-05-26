@@ -1,99 +1,47 @@
-import random 
+import random
+from itertools import product, cycle
 
 # variavel global que vai nos ajudar
 # board é um tipo de lista que vamos mexer através dos índices, sendo 9 posições
-board = ["-", "-", "-",
-          "-", "-", "-",
-          "-", "-", "-"]
+board = [None] * 9 # criando uma lista com 9 posições
+free_positions = list(range(0,9)) # cria uma lista de posições livres
+random.shuffle(free_positions) # Embaralha posições livres
+player = cycle(["X", "O"])
+current_player = next(player)
 
-currentPlayer = "X"
-winner = None #sem valor pra começar
-gameIsGoing = True
+# função que exibe o tabuleiro
+print_board = lambda: print(f"\n{'--' * 5}\n".join(" | ".join(x or " " for x in board[i:i + 3]) for i in range(0, len(board), 3)))
+# função que retorna uma lista com as posições do tabuleiro que definem vitoria
+winning_combinations = lambda: [board[0:3], board[3:6], board[6:9], board[0::3], board[1::3], board[2::3], board[0::4], board[2:-1:2]]
 
-#função do quadro, os índices serão adicionados de acordo com o player
-def printBoard(board):
-    print(board[0] + " | " + board[1] + " | " + board[2])
-    print("--" * 5)
-    print(board[3] + " | " + board[4] + " | " + board[5])
-    print("--" * 5)
-    print(board[6] + " | " + board[7] + " | " + board[8])
-printBoard(board)
+# função que busca e retorna o ganhador
+def get_winner():
+    # Cria um gerador que testa todos as condições de vitoria para os dois jogadores
+    winner = [value if set(sub_list) == set(value) else None for value, sub_list in product(["X", "O"], winning_combinations())]
+    return "".join(set(filter(lambda x: x, winner))) # Retorna 'X', 'O', ou ''
     
-def playerTurn(board):
-    inputPosition = int(input("Escolha uma posição de 1 a 9: "))
-    #verificar se a posição é válida (de 1 a 9 os quadradinhos) e vazia
-    if inputPosition >= 1 and inputPosition <= 9 and board[inputPosition - 1] == "-":
-        board[inputPosition - 1] = currentPlayer
+def make_move(current_player):
+    if current_player == "X":
+        print_board()
+        inputPosition = int(input("Escolha uma posição de 1 a 9: "))
+        #verificar se a posição é válida (de 1 a 9 os quadradinhos) e vazia
+        if inputPosition-1 in free_positions: # verifica se a posição selecionada esta na lista de posições livres
+            board[inputPosition - 1] = current_player # adiciona um X em uma posição selecionada
+            free_positions.remove(inputPosition-1) # remove uma a posição selecionada da lista de posições livres
+        else:
+            raise IndexError()
     else:
-        print("Posição inválida, tente novamente") 
+        if free_positions:
+            board[free_positions.pop()] = current_player # adiciona um O em uma posição livre no tabuleiro
 
-    
-def checkHorizontal(board):
-    global winner
-    if board[0] == board[1] == board[2] and board[1]!= "-":
-        winner = board[0]
-        return True
-    elif board[3] == board[4] == board[5] and board[3] != "-":
-        winner = board[3]
-        return True
-    elif board[6] == board[7] == board[8] and board[6] != "-":
-        winner = board[6]
-        return True
-    
-def checkVertical(board):
-    global winner
-    if board[0] == board[3] == board[6] and board[0] != "-":
-        winner = board[0]
-        return True
-    elif board[1] == board[4] == board[7] and board[1] != "-":
-        winner = board[1]
-        return True
-    elif board[2] == board[5] == board[8] and board[2] != "-":
-        winner = board[2]
-        return True
+while not get_winner() and free_positions: # roda o jogo até que aja um ganhador ou não tenha mais posições no taboleiro
+    try:
+        make_move(current_player)
+        current_player = next(player)
+    except IndexError:
+        print("Posição inválida, tente novamente")
+    except ValueError:
+        print("Caractere inválido, tente novamente")
 
-def checkDiagonal(board):
-    global winner
-    if board[0] == board[4] == board[8] and board[0] != "-":
-        winner = board[0]
-        return True
-    elif board[2] == board[4] == board[6] and board[2] != "-":
-        winner = board[2]
-        return True
-    
-def checkEmpate(board):
-    global gameIsGoing
-    if "-" not in board:
-        gameIsGoing = False
-        print("Empate!")
-        
-def trocarJogador():
-    global currentPlayer
-    if currentPlayer == "X":
-        currentPlayer = "O"
-    else:
-        currentPlayer = "X"
-
-def checkWinner():
-    if checkHorizontal(board) or checkVertical(board) or checkDiagonal(board):
-        printBoard(board)
-        print(f"O jogador {winner} venceu!")
-        return True
-    
-def bot(board):
-    while currentPlayer == "O":
-        botPosition = random.randint(0, 8)
-        if board[botPosition] == "-":
-            board[botPosition] = "O"
-            trocarJogador()
-
-while gameIsGoing:
-    printBoard(board)
-    playerTurn(board)
-    checkWinner()
-    checkEmpate(board)
-    trocarJogador()
-    bot(board)
-    checkWinner()
-    if checkEmpate(board) or checkWinner():
-        gameIsGoing = False
+print_board()
+print(f"O jogador {get_winner()} venceu!" if get_winner() else "O Jogo terminou em empate!")
