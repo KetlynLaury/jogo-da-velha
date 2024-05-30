@@ -11,14 +11,13 @@ current_player = next(player)
 
 # função que exibe o tabuleiro
 print_board = lambda: print(f"\n{'--' * 5}\n".join(" | ".join(x or " " for x in board[i:i + 3]) for i in range(0, len(board), 3)))
-# função que retorna uma lista com as posições do tabuleiro que definem vitoria
-winning_combinations = lambda: [board[0:3], board[3:6], board[6:9], board[0::3], board[1::3], board[2::3], board[0::4], board[2:-1:2]]
 
 # função que busca e retorna o ganhador
 def get_winner():
+    combinations = [board[0:3], board[3:6], board[6:9], board[0::3], board[1::3], board[2::3], board[0::4], board[2:-1:2]]
     # Cria um gerador que testa todos as condições de vitoria para os dois jogadores
-    winner = [value if set(sub_list) == set(value) else None for value, sub_list in product(["X", "O"], winning_combinations())]
-    return "".join(set(filter(lambda x: x, winner))) # Retorna 'X', 'O', ou ''
+    winner = [value for value, sub_list in product(["X", "O"], combinations) if set(sub_list) == set(value)]
+    return "".join(set(winner)) # Retorna 'X', 'O', ou ''
     
 def make_move(current_player):
     if current_player == "X":
